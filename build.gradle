@@ -1,0 +1,65 @@
+plugins {
+	id 'java'
+	id 'org.springframework.boot' version '3.5.7'
+	id 'io.spring.dependency-management' version '1.1.7'
+}
+
+group = 'com.timetable'
+version = '0.0.1-SNAPSHOT'
+description = '시간표 메이커 백엔드'
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(21)
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+    // Web/JPA/Validation
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+
+    // Mail (네가 SMTP 설정 써서 필요)
+    implementation 'org.springframework.boot:spring-boot-starter-mail'
+
+    // 비밀번호 암호화(BCrypt)
+    implementation 'org.springframework.security:spring-security-crypto'
+
+    // 마이그레이션(권장)
+    implementation 'org.flywaydb:flyway-core'
+
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.flywaydb:flyway-database-postgresql'
+
+    //jwt
+    implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
+    runtimeOnly   'io.jsonwebtoken:jjwt-impl:0.11.5'
+    runtimeOnly   'io.jsonwebtoken:jjwt-jackson:0.11.5'
+    // DB 드라이버
+    runtimeOnly 'com.h2database:h2'            // local(H2) 프로필에서 사용
+    runtimeOnly 'org.postgresql:postgresql'    // render/postgres 프로필에서 사용
+
+    // Lombok (네 엔티티에 @Getter/@Builder 등 사용)
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+    testCompileOnly 'org.projectlombok:lombok'
+    testAnnotationProcessor 'org.projectlombok:lombok'
+
+    // Test
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+
+    // (선택) 통합테스트에 Testcontainers
+    testImplementation 'org.testcontainers:junit-jupiter'
+    testImplementation 'org.testcontainers:postgresql'
+
+
+
+}
+tasks.named('test') {
+	useJUnitPlatform()
+}

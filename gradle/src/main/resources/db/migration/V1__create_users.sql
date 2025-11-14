@@ -1,0 +1,10 @@
+CREATE TABLE IF NOT EXISTS users (
+    id BIGSERIAL PRIMARY KEY,
+    student_id VARCHAR(64) NOT NULL UNIQUE,
+    name VARCHAR(100) NOT NULL,
+    major VARCHAR(100) NOT NULL,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    password VARCHAR(100) NOT NULL,
+    email_verified BOOLEAN NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);

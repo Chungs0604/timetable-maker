@@ -1,0 +1,42 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://dpg-d4a2nr3ipnbc739cjo7g-a.singapore-postgres.render.com:5432/user_99b2?sslmode=require
+    username: user_99b2_user
+    password: Zb5GmSTcRdZAMq3a1ISSffQOBKT6OsRY
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 2
+      idle-timeout: 30000
+      connection-timeout: 30000
+
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: alsk3528@gmail.com
+    password: azqelhfnerpmnxch
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
+      mail.debug: true
+
+server:
+  port: 8080
+  timezone: Asia/Seoul
+
+logging:
+  level:
+    org.hibernate.SQL: info
+    org.hibernate.type: warn
+jwt:
+  secret: ${JWT_SECRET:please-change-me-32bytes-at-least-aaaaaaaa}
+  expires-seconds: 3600   # 1시간 예시
