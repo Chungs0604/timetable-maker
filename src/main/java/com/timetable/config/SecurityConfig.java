@@ -35,27 +35,27 @@ public class SecurityConfig {
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                // ✅ CORS 활성화 (아래 corsConfigurationSource() 사용)
+                // CORS 활성화 (아래 corsConfigurationSource() 사용)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
                 .httpBasic(basic -> basic.disable())
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        // ✅ 브라우저 preflight 요청(OPTIONS)은 무조건 허용
+                        // 브라우저 preflight 요청(OPTIONS)은 무조건 허용
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        // ✅ 회원가입/로그인/인증코드 전송 등 오픈 API
+                        // 회원가입/로그인/인증코드 전송 등 오픈 API
                         .requestMatchers("/auth/**", "/error").permitAll()
                         // 나머지는 JWT 필요
                         .anyRequest().authenticated()
                 )
-                // ✅ JWT 필터는 그대로 유지
+                // JWT 필터는 그대로 유지
                 .addFilterBefore(new JwtAuthFilter(jwtService, userRepository),
                         UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
-    // ✅ CORS 설정 Bean
+    // CORS 설정 Bean
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();

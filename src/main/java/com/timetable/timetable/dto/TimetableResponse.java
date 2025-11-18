@@ -19,7 +19,7 @@ public class TimetableResponse {
     @AllArgsConstructor
     public static class LectureDto {
 
-        // 🔥 프론트에서 삭제 버튼용으로 쓸 필드들
+        // 프론트에서 삭제 버튼용으로 쓸 필드들
         private Long itemId;        // timetable_item PK (셀 삭제용)
         private Long lectureId;     // 공식 강의면 값 있음
         private Long userLectureId; // 커스텀 강의면 값 있음

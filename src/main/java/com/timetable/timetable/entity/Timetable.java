@@ -44,7 +44,7 @@ public class Timetable {
             cascade = CascadeType.ALL,
             orphanRemoval = true)
     @Builder.Default
-    @Setter(AccessLevel.NONE)  // ❗ 컬렉션은 setter 금지 (통째로 교체 못하게)
+    @Setter(AccessLevel.NONE)  // 컬렉션은 setter 금지 (통째로 교체 못하게)
     private List<TimetableItem> items = new ArrayList<>();
 
     // ===== 연관관계 편의 메서드 =====

@@ -47,7 +47,7 @@ public class TimetableService {
                         userId, req.getYear(), req.getSemester()
                 )
                 .orElseGet(() -> {
-                    // ✅ @Builder.Default 덕분에 items 는 이미 new ArrayList<>() 로 초기화됨
+                    //@Builder.Default 덕분에 items 는 이미 new ArrayList<>() 로 초기화됨
                     Timetable t = Timetable.builder()
                             .user(user)
                             .year(req.getYear())
@@ -56,11 +56,11 @@ public class TimetableService {
                             .totalCredits(0)
                             .createdAt(LocalDateTime.now())
                             .build();
-                    // ❌ t.setItems(new ArrayList<>()); 필요 없음 + 지금은 setter도 없음
+                    //t.setItems(new ArrayList<>()); 필요 없음 + 지금은 setter도 없음
                     return timetableRepository.save(t);
                 });
 
-        // ❌ 더 이상 필요 없음 (items는 null이 아님)
+        //더 이상 필요 없음 (items는 null이 아님)
         // if (timetable.getItems() == null)
         //     timetable.setItems(new ArrayList<>());
 
@@ -72,7 +72,7 @@ public class TimetableService {
                 .name(req.getName())
                 .credit(req.getCredit())
                 .dayPeriod(req.getDayPeriod())
-                .code(req.getCode())     // ⭐ 추가
+                .code(req.getCode())     // 추가
                 .classroom(null)
                 .major(false)
                 .geCategory(null)
@@ -94,7 +94,7 @@ public class TimetableService {
                     .fixed(true)          // ★ 고정강의
                     .build();
 
-            // ✅ 편의 메서드 사용 (양방향 세팅)
+            //편의 메서드 사용 (양방향 세팅)
             timetable.addItem(item);
             // 내부에서 this.items.add(item); item.setTimetable(this); 둘 다 처리
         }
@@ -131,16 +131,16 @@ public class TimetableService {
                     return timetableRepository.save(t);
                 });
 
-        // 🔴 2) DB에서 이전 자동생성 아이템(fixed=false) 먼저 bulk delete
+        // 2) DB에서 이전 자동생성 아이템(fixed=false) 먼저 bulk delete
         timetableItemRepository.deleteAutoItemsByTimetableId(timetable.getId());
 
-        // 🔴 3) 엔티티 컬렉션에서도 fixed=false 아이템 제거 (컬렉션은 '교체'하지 않고 '수정'만!)
+        // 3) 엔티티 컬렉션에서도 fixed=false 아이템 제거 (컬렉션은 '교체'하지 않고 '수정'만!)
         timetable.getItems().removeIf(item -> !item.isFixed());
 
-        // ✅ 이제 여기서부터 timetable.getItems() == 고정 강의만 들어 있음
+        // 이제 여기서부터 timetable.getItems() == 고정 강의만 들어 있음
         List<TimetableItem> fixedItems = new ArrayList<>(timetable.getItems());
 
-        // 🔴 4) 고정 강의끼리도 겹치면 에러
+        // 4) 고정 강의끼리도 겹치면 에러
         if (hasTimeConflictAmongFixedItems(timetable)) {
             throw new IllegalArgumentException("고정 강의끼리 시간이 겹칩니다.");
         }
@@ -177,7 +177,7 @@ public class TimetableService {
 
         List<Lecture> fixedOfficialLectures = new ArrayList<>(fixedOfficialMap.values());
 
-        // 🔴 5) 고정 슬롯 (요일/교시)
+        // 5) 고정 슬롯 (요일/교시)
         Set<String> occupiedSlotsByFixed = fixedItems.stream()
                 .map(i -> slotKey(i.getDay(), i.getPeriod()))  // ex) "월-21"
                 .collect(Collectors.toSet());
@@ -257,7 +257,7 @@ public class TimetableService {
                 .filter(l -> !fixedIds.contains(l.getId()))
                 .toList();
 
-        // 🔴 6) 이미 차 있는 칸들(고정강의) 기준으로 occupiedSlots 만들기
+        // 6) 이미 차 있는 칸들(고정강의) 기준으로 occupiedSlots 만들기
         Set<String> occupiedSlots = timetable.getItems().stream()
                 .map(i -> slotKey(i.getDay(), i.getPeriod()))
                 .collect(Collectors.toSet());
@@ -267,7 +267,7 @@ public class TimetableService {
             for (DayPeriod dp : parseDayPeriods(lec.getDayPeriod())) {
                 String key = slotKey(dp.getDay(), dp.getPeriod());
 
-                // ✅ Set으로 메모리 상에서 중복 방지
+                // Set으로 메모리 상에서 중복 방지
                 if (!occupiedSlots.add(key)) {
                     continue;
                 }
@@ -280,7 +280,7 @@ public class TimetableService {
                         .fixed(false)
                         .build();
 
-                // ✅ 편의 메서드 사용 (양방향 세팅)
+                // 편의 메서드 사용 (양방향 세팅)
                 timetable.addItem(item);
             }
         }
@@ -485,7 +485,7 @@ public class TimetableService {
                     int credit;
 
                     if (lec != null) {
-                        // 🔵 공식 강의
+                        //공식 강의
                         code = lec.getCode();
                         name = lec.getName();
                         professor = lec.getProfessor();
@@ -494,7 +494,7 @@ public class TimetableService {
                         geCategory = lec.getGeCategory();
                         credit = lec.getCredit();
                     } else if (ul != null) {
-                        // 🟢 사용자 정의 강의
+                        //사용자 정의 강의
                         code = ul.getCode();
                         name = ul.getName();
                         professor = null;                 // 필요시 ul에 필드 있으면 거기서 꺼내기
