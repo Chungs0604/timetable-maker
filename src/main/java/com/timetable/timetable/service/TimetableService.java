@@ -9,7 +9,7 @@ import com.timetable.timetable.dto.AutoGenerateRequest;
 import com.timetable.timetable.dto.TimetableResponse;
 import com.timetable.timetable.entity.Timetable;
 import com.timetable.timetable.entity.TimetableItem;
-import com.timetable.timetable.repo.TimetableItemRepository;   // ★ 추가
+import com.timetable.timetable.repo.TimetableItemRepository;
 import com.timetable.timetable.repo.TimetableRepository;
 import com.timetable.user.entity.User;
 import com.timetable.user.repo.UserRepository;
@@ -30,7 +30,7 @@ public class TimetableService {
     private final LectureRepository lectureRepository;
     private final UserLectureRepository userLectureRepository;
     private final TimetableRepository timetableRepository;
-    private final TimetableItemRepository timetableItemRepository;  // ★ 추가
+    private final TimetableItemRepository timetableItemRepository;
     private final UserRepository userRepository;
 
     // =========================================================
