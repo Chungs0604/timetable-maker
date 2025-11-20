@@ -541,11 +541,19 @@ public class TimetableService {
 
     @Transactional(readOnly = true)
     public TimetableResponse getMyLatest(Long userId, int year, int semester) {
-        Timetable timetable = timetableRepository
+        return timetableRepository
                 .findFirstByUserIdAndYearAndSemesterOrderByCreatedAtDesc(userId, year, semester)
-                .orElseThrow(() -> new IllegalArgumentException("해당 학기 시간표가 없습니다."));
-
-        return buildResponseFromTimetable(timetable);
+                .map(this::buildResponseFromTimetable)
+                .orElseGet(() ->
+                        // 시간표가 없을 때 프론트가 처리하기 쉬운 "빈 시간표" 응답
+                        new TimetableResponse(
+                                null,          // timetableId 없음
+                                year,
+                                semester,
+                                0,             // totalCredits = 0
+                                List.of()      // lectures = 빈 배열
+                        )
+                );
     }
 
     @Transactional
