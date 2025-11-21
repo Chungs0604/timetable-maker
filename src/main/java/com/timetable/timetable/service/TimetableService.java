@@ -179,7 +179,8 @@ public class TimetableService {
 
         // 5) 고정 슬롯 (요일/교시)
         Set<String> occupiedSlotsByFixed = fixedItems.stream()
-                .map(i -> slotKey(i.getDay(), i.getPeriod()))  // ex) "월-21"
+                .flatMap(i -> normalizePeriods(i.getPeriod()).stream()
+                        .map(p -> slotKey(i.getDay(), p)))
                 .collect(Collectors.toSet());
 
         // 고정 학점만으로도 목표 초과면 그대로 반환
@@ -259,31 +260,65 @@ public class TimetableService {
 
         // 6) 이미 차 있는 칸들(고정강의) 기준으로 occupiedSlots 만들기
         Set<String> occupiedSlots = timetable.getItems().stream()
-                .map(i -> slotKey(i.getDay(), i.getPeriod()))
+                .flatMap(i -> normalizePeriods(i.getPeriod()).stream()
+                        .map(p -> slotKey(i.getDay(), p)))
                 .collect(Collectors.toSet());
 
         // 새로 선택된 교양들(자동 추가)을 timetable_item으로 추가 (fixed=false)
         for (Lecture lec : autoLectures) {
-            for (DayPeriod dp : parseDayPeriods(lec.getDayPeriod())) {
-                String key = slotKey(dp.getDay(), dp.getPeriod());
 
-                // Set으로 메모리 상에서 중복 방지
-                if (!occupiedSlots.add(key)) {
-                    continue;
+            List<DayPeriod> dps = parseDayPeriods(lec.getDayPeriod());
+
+            // 1) 이 강의가 차지할 모든 정규화된 슬롯을 먼저 계산
+            Set<String> lectureSlots = new HashSet<>();
+            boolean conflict = false;
+
+            for (DayPeriod dp : dps) {
+                for (int norm : normalizePeriods(dp.getPeriod())) {
+                    String key = slotKey(dp.getDay(), norm);
+
+                    // 이미 다른 강의가 쓰고 있는 슬롯이면 → 이 강의 전체를 스킵
+                    if (occupiedSlots.contains(key)) {
+                        conflict = true;
+                        break;
+                    }
+                    lectureSlots.add(key);
+                }
+                if (conflict) break;
+            }
+
+            // 2) 다른 강의들과 충돌하면 이 강의는 통째로 패스
+            if (conflict) {
+                continue;
+            }
+
+            // 3) 충돌이 없다면 → 이제 이 강의의 모든 칸을 실제 시간표에 반영
+            //    (occupiedSlots도 여기서 한 번에 업데이트)
+            for (DayPeriod dp : dps) {
+                for (int norm : normalizePeriods(dp.getPeriod())) {
+                    occupiedSlots.add(slotKey(dp.getDay(), norm));
                 }
 
                 TimetableItem item = TimetableItem.builder()
                         .lecture(lec)
                         .userLecture(null)
                         .day(dp.getDay())
-                        .period(dp.getPeriod())
+                        .period(dp.getPeriod())   // DB에는 원래 교시(23,24,25,26 등)를 그대로 저장
                         .fixed(false)
                         .build();
 
-                // 편의 메서드 사용 (양방향 세팅)
                 timetable.addItem(item);
             }
         }
+
+
+        System.out.println("=== autoGenerate 디버그 ===");
+        System.out.println("fixedCredits = " + fixedCredits);
+        System.out.println("freeDays = " + req.getFreeDays());
+        System.out.println("geCategories = " + req.getGeCategories());
+        System.out.println("후보 전체 개수 = " + candidates.size());
+        System.out.println("필터 후 후보 개수 = " + filteredCandidates.size());
+        System.out.println("best.totalCredits = " + (best != null ? best.totalCredits : -1));
 
         return buildResponseFromTimetable(timetableRepository.save(timetable));
     }
@@ -395,19 +430,31 @@ public class TimetableService {
         List<String> result = new ArrayList<>();
         for (String c : dp.split("\\s+")) {
             String day = c.substring(0, 1);
-            for (String p : c.substring(1).split("\\.")) {
-                if (!p.isBlank()) result.add(day + "-" + p);
+            for (String pStr : c.substring(1).split("\\.")) {
+                if (pStr.isBlank()) continue;
+
+                int original = Integer.parseInt(pStr);
+                for (int norm : normalizePeriods(original)) {
+                    result.add(day + "-" + norm);
+                }
             }
         }
         return result;
     }
 
+
     private boolean hasTimeConflictAmongFixedItems(Timetable timetable) {
         Set<String> slots = new HashSet<>();
         for (TimetableItem i : timetable.getItems()) {
             if (!i.isFixed()) continue;
-            String key = slotKey(i.getDay(), i.getPeriod());
-            if (!slots.add(key)) return true;
+
+            for (int p : normalizePeriods(i.getPeriod())) {
+                String key = slotKey(i.getDay(), p);
+                if (!slots.add(key)) {
+                    // 같은 (요일, 정규화된 교시)가 이미 있음 → 시간 충돌
+                    return true;
+                }
+            }
         }
         return false;
     }
@@ -674,30 +721,28 @@ public class TimetableService {
                 continue;
             }
 
-            // 슬롯 충돌 체크
+            // 슬롯 충돌 체크 (extractSlots 안에서 normalizePeriods 사용)
             if (isConflictWithSlots(lec, occupied)) {
                 continue;
             }
 
-            // ✔ 완전 랜덤성을 더 주고 싶으면,
-            //   여기서 확률적으로 건너뛰는 옵션도 있음 (예: 20% 확률로 건너뛰기)
-            // if (random.nextDouble() < 0.2) continue;
-
             // 이 강의를 선택
             current.add(lec);
 
-            // 이 강의의 모든 (day, period)를 occupied에 반영
+            // 이 강의의 모든 (day, period)를 "정규화된 교시" 기준으로 occupied에 반영
             for (DayPeriod dp : parseDayPeriods(lec.getDayPeriod())) {
-                occupied.add(slotKey(dp.getDay(), dp.getPeriod()));
+                for (int norm : normalizePeriods(dp.getPeriod())) {
+                    occupied.add(slotKey(dp.getDay(), norm));
+                }
             }
 
             currentCredits += credit;
 
-            // 목표 학점에 꽤 가까워지면 (예: target - 1 이내) 그냥 여기서 만족하고 끝낼 수도 있음
             if (currentCredits == targetCredits) {
                 break;
             }
         }
+
 
         return new ScheduleCandidate(current, currentCredits);
     }
@@ -732,6 +777,18 @@ public class TimetableService {
         } catch (Exception e) {
             return 99;
         }
+    }
+    // 야간 교시(21~26)를 실제 겹치는 주간 교시(1~9)로 정규화
+    private List<Integer> normalizePeriods(int period) {
+        return switch (period) {
+            case 21 -> List.of(1, 2);  // 09:00~10:15  → 1,2교시와 겹침
+            case 22 -> List.of(2, 3);  // 10:30~11:45 → 2,3
+            case 23 -> List.of(4, 5);  // 12:00~13:15 → 4,5
+            case 24 -> List.of(5, 6);  // 13:30~14:45 → 5,6
+            case 25 -> List.of(7, 8);  // 15:00~16:15 → 7,8
+            case 26 -> List.of(8, 9);  // 16:30~17:45 → 8,9
+            default -> List.of(period); // 나머지는 자기 자신
+        };
     }
 
 
