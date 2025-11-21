@@ -209,6 +209,7 @@ public class TimetableService {
         List<Lecture> filteredCandidates = candidates.stream()
                 .filter(l -> !l.isCustom())                         // 공식 교양만
                 .filter(l -> !fixedNames.contains(l.getName()))     // 이미 고정된 과목 이름 제외
+                .filter(l -> !isVacationLecture(l))                 // 방학에 열리는 스키, 스노우보드 제외
                 .filter(l -> !isOnFreeDay(l, freeDays))             // 자유요일 제외
                 .filter(l -> !isConflictWithSlots(l, occupiedSlotsByFixed)) // 고정과 겹치지 않게
                 .toList();
@@ -791,5 +792,24 @@ public class TimetableService {
         };
     }
 
+    private boolean isVacationLecture(Lecture lec) {
+        String code = lec.getCode();
+        String name = lec.getName();
+
+        if (code == null && name == null) return false;
+
+        // 1) 교과코드 기준으로 막기
+        if ("GE1987".equals(code) || "GE1321".equals(code)) { // 스키, 스노우보드 코드
+            return true;
+        }
+
+        // 2) 혹시 코드 바뀌어도 이름으로 방어
+        if (name != null &&
+                (name.contains("스키") || name.contains("스노우보드"))) {
+            return true;
+        }
+
+        return false;
+    }
 
 }
