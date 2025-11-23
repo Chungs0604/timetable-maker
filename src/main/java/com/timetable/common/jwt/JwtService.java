@@ -23,7 +23,7 @@ public class JwtService {
         this.expires  = expiresSeconds;
     }
 
-    /** 액세스 토큰 발급: sub=userId, email 클레임 포함 */
+    /*임* 액세스 토큰 발급: sub=userId, email 클레 포함 */
     public String issue(Long userId, String email) {
         Instant now = Instant.now();
         return Jwts.builder()

@@ -56,13 +56,10 @@ public class TimetableService {
                             .totalCredits(0)
                             .createdAt(LocalDateTime.now())
                             .build();
-                    //t.setItems(new ArrayList<>()); 필요 없음 + 지금은 setter도 없음
+
                     return timetableRepository.save(t);
                 });
 
-        //더 이상 필요 없음 (items는 null이 아님)
-        // if (timetable.getItems() == null)
-        //     timetable.setItems(new ArrayList<>());
 
         // UserLecture 생성 (사용자 정의 강의)
         UserLecture customLecture = UserLecture.builder()
@@ -91,7 +88,7 @@ public class TimetableService {
                     .userLecture(customLecture)
                     .day(slot.getDay())
                     .period(slot.getPeriod())
-                    .fixed(true)          // ★ 고정강의
+                    .fixed(true)          //고정강의
                     .build();
 
             //편의 메서드 사용 (양방향 세팅)
@@ -218,8 +215,8 @@ public class TimetableService {
         // seed를 조금 바꿔주면, 서버 재시작 후에도 더 랜덤한 느낌
         Random random = new Random(System.nanoTime() ^ userId);
 
-// 시도 횟수도 살짝 늘려볼 수 있음
-        int attempts = 40;  // 25 -> 40 정도
+        // 시도 횟수
+        int attempts = 40;
         ScheduleCandidate best = null;
 
         for (int i = 0; i < attempts; i++) {

@@ -22,7 +22,7 @@ public class Timetable {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
-    @Setter // user는 바꿀 수도 있으니 setter 허용 (원하면 빼도 됨)
+    @Setter // user는 바꿀 수도 있으니 setter 허용
     private User user;
 
     @Setter
@@ -73,7 +73,7 @@ public class Timetable {
         items.removeIf(item -> !item.isFixed());
     }
 
-    // createdAt 자동 세팅 (선택사항)
+    // createdAt 자동 세팅
     @PrePersist
     public void onCreate() {
         if (this.createdAt == null) {
